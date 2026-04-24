@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: starterkit-db
+    environment:
+      POSTGRES_USER: starterkit
+      POSTGRES_PASSWORD: starterkit
+      POSTGRES_DB: starterkit
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U starterkit -d starterkit"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: starterkit-api
+    environment:
+      ENV: development
+      PORT: 8080
+      DATABASE_URL: postgres://starterkit:starterkit@db:5432/starterkit?sslmode=disable
+      JWT_SECRET: local-dev-secret-change-me-in-production
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL: 168h
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["go", "run", "./cmd/api"]
+
+volumes:
+  postgres_data:
