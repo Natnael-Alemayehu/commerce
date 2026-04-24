@@ -9,14 +9,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Note struct {
-	ID        uuid.UUID          `json:"id"`
-	UserID    uuid.UUID          `json:"user_id"`
-	Title     string             `json:"title"`
-	Content   string             `json:"content"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+type Address struct {
+	ID            uuid.UUID          `json:"id"`
+	UserID        uuid.UUID          `json:"user_id"`
+	Label         pgtype.Text        `json:"label"`
+	RecipientName string             `json:"recipient_name"`
+	Phone         pgtype.Text        `json:"phone"`
+	StreetAddress string             `json:"street_address"`
+	City          string             `json:"city"`
+	State         pgtype.Text        `json:"state"`
+	PostalCode    string             `json:"postal_code"`
+	Country       string             `json:"country"`
+	IsDefault     pgtype.Bool        `json:"is_default"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 }
 
 type Permission struct {
@@ -56,6 +61,8 @@ type User struct {
 	Phone        pgtype.Text        `json:"phone"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	AvatarUrl    pgtype.Text        `json:"avatar_url"`
+	Bio          pgtype.Text        `json:"bio"`
 }
 
 type UserRole struct {

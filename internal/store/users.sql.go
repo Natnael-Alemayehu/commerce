@@ -21,7 +21,7 @@ INSERT INTO users (
 ) VALUES (
     $1, $2, $3, $4
 )
-RETURNING id, email, password_hash, name, phone, created_at, updated_at
+RETURNING id, email, password_hash, name, phone, created_at, updated_at, avatar_url, bio
 `
 
 type CreateUserParams struct {
@@ -47,6 +47,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Phone,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AvatarUrl,
+		&i.Bio,
 	)
 	return i, err
 }
@@ -62,7 +64,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getAllUsers = `-- name: GetAllUsers :many
-SELECT id, email, password_hash, name, phone, created_at, updated_at FROM users
+SELECT id, email, password_hash, name, phone, created_at, updated_at, avatar_url, bio FROM users
 ORDER BY created_at DESC
 `
 
@@ -83,6 +85,8 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 			&i.Phone,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.AvatarUrl,
+			&i.Bio,
 		); err != nil {
 			return nil, err
 		}
@@ -95,7 +99,7 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password_hash, name, phone, created_at, updated_at FROM users
+SELECT id, email, password_hash, name, phone, created_at, updated_at, avatar_url, bio FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -110,12 +114,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Phone,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AvatarUrl,
+		&i.Bio,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, password_hash, name, phone, created_at, updated_at FROM users
+SELECT id, email, password_hash, name, phone, created_at, updated_at, avatar_url, bio FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -130,6 +136,8 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Phone,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AvatarUrl,
+		&i.Bio,
 	)
 	return i, err
 }
@@ -141,9 +149,11 @@ SET
     password_hash = COALESCE($3, password_hash),
     name = COALESCE($4, name),
     phone = COALESCE($5, phone),
+    avatar_url = COALESCE($6, avatar_url),
+    bio = COALESCE($7, bio),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, email, password_hash, name, phone, created_at, updated_at
+RETURNING id, email, password_hash, name, phone, created_at, updated_at, avatar_url, bio
 `
 
 type UpdateUserParams struct {
@@ -152,6 +162,8 @@ type UpdateUserParams struct {
 	PasswordHash pgtype.Text `json:"password_hash"`
 	Name         pgtype.Text `json:"name"`
 	Phone        pgtype.Text `json:"phone"`
+	AvatarUrl    pgtype.Text `json:"avatar_url"`
+	Bio          pgtype.Text `json:"bio"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
@@ -161,6 +173,8 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.PasswordHash,
 		arg.Name,
 		arg.Phone,
+		arg.AvatarUrl,
+		arg.Bio,
 	)
 	var i User
 	err := row.Scan(
@@ -171,6 +185,8 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Phone,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AvatarUrl,
+		&i.Bio,
 	)
 	return i, err
 }

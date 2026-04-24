@@ -23,182 +23,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/admin/notes": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "List all notes across all users (admin only)",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "admin"
-                ],
-                "summary": "List all notes",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "default": 20,
-                        "description": "Number of items to return",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Offset for pagination",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ListNotesResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/admin/notes/deleted": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "List all soft-deleted notes (admin only)",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "admin"
-                ],
-                "summary": "List deleted notes",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "default": 20,
-                        "description": "Number of items to return",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Offset for pagination",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ListNotesResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/admin/notes/{id}/restore": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Restore a soft-deleted note (admin only)",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "admin"
-                ],
-                "summary": "Restore a deleted note",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Note ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.NoteResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/admin/users": {
             "get": {
                 "security": [
@@ -573,65 +397,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/notes": {
-            "get": {
+        "/api/v1/me": {
+            "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "List notes for the authenticated user (or all notes for admin)",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "notes"
-                ],
-                "summary": "List notes",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "default": 20,
-                        "description": "Number of items to return",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Offset for pagination",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ListNotesResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Create a new note for the authenticated user",
+                "description": "Update the authenticated user's profile",
                 "consumes": [
                     "application/json"
                 ],
@@ -639,25 +412,25 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "notes"
+                    "user"
                 ],
-                "summary": "Create a new note",
+                "summary": "Update profile",
                 "parameters": [
                     {
-                        "description": "Note details",
+                        "description": "Profile updates",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateNoteRequest"
+                            "$ref": "#/definitions/model.UpdateProfileRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.NoteResponse"
+                            "$ref": "#/definitions/model.UserResponse"
                         }
                     },
                     "400": {
@@ -681,45 +454,33 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/notes/{id}": {
+        "/api/v1/me/addresses": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get a single note by ID",
+                "description": "List all addresses for the authenticated user",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "notes"
+                    "user"
                 ],
-                "summary": "Get a note",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Note ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
+                "summary": "List addresses",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.NoteResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.AddressResponse"
+                            }
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -732,13 +493,13 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update an existing note",
+                "description": "Add a new address for the authenticated user",
                 "consumes": [
                     "application/json"
                 ],
@@ -746,24 +507,81 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "notes"
+                    "user"
                 ],
-                "summary": "Update a note",
+                "summary": "Create address",
+                "parameters": [
+                    {
+                        "description": "Address details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreateAddressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.AddressResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/me/addresses/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Update address",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Note ID",
+                        "description": "Address ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Note updates",
+                        "description": "Address updates",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateNoteRequest"
+                            "$ref": "#/definitions/model.UpdateAddressRequest"
                         }
                     }
                 ],
@@ -771,7 +589,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.NoteResponse"
+                            "$ref": "#/definitions/model.AddressResponse"
                         }
                     },
                     "400": {
@@ -806,18 +624,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Soft-delete a note",
+                "description": "Delete an address",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "notes"
+                    "user"
                 ],
-                "summary": "Delete a note",
+                "summary": "Delete address",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Note ID",
+                        "description": "Address ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -847,48 +665,96 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/me/addresses/{id}/default": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Set an address as the default",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Set default address",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Address ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.AddressResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "handler.CreateNoteRequest": {
+        "model.AddressResponse": {
             "type": "object",
-            "required": [
-                "content",
-                "title"
-            ],
             "properties": {
-                "content": {
+                "city": {
                     "type": "string"
                 },
-                "title": {
-                    "type": "string",
-                    "maxLength": 255
-                }
-            }
-        },
-        "handler.ListNotesResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.NoteResponse"
-                    }
-                },
-                "meta": {
-                    "$ref": "#/definitions/model.PaginationMeta"
-                }
-            }
-        },
-        "handler.UpdateNoteRequest": {
-            "type": "object",
-            "properties": {
-                "content": {
+                "country": {
                     "type": "string"
                 },
-                "title": {
-                    "type": "string",
-                    "maxLength": 255
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "postal_code": {
+                    "type": "string"
+                },
+                "recipient_name": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "street_address": {
+                    "type": "string"
                 }
             }
         },
@@ -906,6 +772,51 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/model.UserResponse"
+                }
+            }
+        },
+        "model.CreateAddressRequest": {
+            "type": "object",
+            "required": [
+                "city",
+                "postal_code",
+                "recipient_name",
+                "street_address"
+            ],
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "country": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "postal_code": {
+                    "type": "string",
+                    "maxLength": 20
+                },
+                "recipient_name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "state": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "street_address": {
+                    "type": "string"
                 }
             }
         },
@@ -971,43 +882,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.NoteResponse": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.PaginationMeta": {
-            "type": "object",
-            "properties": {
-                "limit": {
-                    "type": "integer"
-                },
-                "offset": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
         "model.RefreshRequest": {
             "type": "object",
             "required": [
@@ -1045,9 +919,74 @@ const docTemplate = `{
                 }
             }
         },
+        "model.UpdateAddressRequest": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "country": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "postal_code": {
+                    "type": "string",
+                    "maxLength": 20
+                },
+                "recipient_name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "state": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "street_address": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.UpdateProfileRequest": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 50
+                }
+            }
+        },
         "model.UserResponse": {
             "type": "object",
             "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },

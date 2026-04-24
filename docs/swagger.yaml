@@ -1,31 +1,28 @@
 basePath: /
 definitions:
-  handler.CreateNoteRequest:
+  model.AddressResponse:
     properties:
-      content:
+      city:
         type: string
-      title:
-        maxLength: 255
+      country:
         type: string
-    required:
-    - content
-    - title
-    type: object
-  handler.ListNotesResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/model.NoteResponse'
-        type: array
-      meta:
-        $ref: '#/definitions/model.PaginationMeta'
-    type: object
-  handler.UpdateNoteRequest:
-    properties:
-      content:
+      created_at:
         type: string
-      title:
-        maxLength: 255
+      id:
+        type: string
+      is_default:
+        type: boolean
+      label:
+        type: string
+      phone:
+        type: string
+      postal_code:
+        type: string
+      recipient_name:
+        type: string
+      state:
+        type: string
+      street_address:
         type: string
     type: object
   model.AuthResponse:
@@ -38,6 +35,39 @@ definitions:
         type: string
       user:
         $ref: '#/definitions/model.UserResponse'
+    type: object
+  model.CreateAddressRequest:
+    properties:
+      city:
+        maxLength: 100
+        type: string
+      country:
+        maxLength: 100
+        type: string
+      is_default:
+        type: boolean
+      label:
+        maxLength: 50
+        type: string
+      phone:
+        maxLength: 50
+        type: string
+      postal_code:
+        maxLength: 20
+        type: string
+      recipient_name:
+        maxLength: 255
+        type: string
+      state:
+        maxLength: 100
+        type: string
+      street_address:
+        type: string
+    required:
+    - city
+    - postal_code
+    - recipient_name
+    - street_address
     type: object
   model.DeleteAccountRequest:
     properties:
@@ -79,30 +109,6 @@ definitions:
     required:
     - refresh_token
     type: object
-  model.NoteResponse:
-    properties:
-      content:
-        type: string
-      created_at:
-        type: string
-      id:
-        type: string
-      title:
-        type: string
-      updated_at:
-        type: string
-      user_id:
-        type: string
-    type: object
-  model.PaginationMeta:
-    properties:
-      limit:
-        type: integer
-      offset:
-        type: integer
-      total:
-        type: integer
-    type: object
   model.RefreshRequest:
     properties:
       refresh_token:
@@ -129,8 +135,54 @@ definitions:
     - name
     - password
     type: object
+  model.UpdateAddressRequest:
+    properties:
+      city:
+        maxLength: 100
+        type: string
+      country:
+        maxLength: 100
+        type: string
+      is_default:
+        type: boolean
+      label:
+        maxLength: 50
+        type: string
+      phone:
+        maxLength: 50
+        type: string
+      postal_code:
+        maxLength: 20
+        type: string
+      recipient_name:
+        maxLength: 255
+        type: string
+      state:
+        maxLength: 100
+        type: string
+      street_address:
+        type: string
+    type: object
+  model.UpdateProfileRequest:
+    properties:
+      avatar_url:
+        type: string
+      bio:
+        maxLength: 1000
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      phone:
+        maxLength: 50
+        type: string
+    type: object
   model.UserResponse:
     properties:
+      avatar_url:
+        type: string
+      bio:
+        type: string
       created_at:
         type: string
       email:
@@ -158,119 +210,6 @@ info:
   title: StarterKit API
   version: "1.0"
 paths:
-  /api/v1/admin/notes:
-    get:
-      description: List all notes across all users (admin only)
-      parameters:
-      - default: 20
-        description: Number of items to return
-        in: query
-        name: limit
-        type: integer
-      - default: 0
-        description: Offset for pagination
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.ListNotesResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: List all notes
-      tags:
-      - admin
-  /api/v1/admin/notes/{id}/restore:
-    post:
-      description: Restore a soft-deleted note (admin only)
-      parameters:
-      - description: Note ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.NoteResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Restore a deleted note
-      tags:
-      - admin
-  /api/v1/admin/notes/deleted:
-    get:
-      description: List all soft-deleted notes (admin only)
-      parameters:
-      - default: 20
-        description: Number of items to return
-        in: query
-        name: limit
-        type: integer
-      - default: 0
-        description: Offset for pagination
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.ListNotesResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: List deleted notes
-      tags:
-      - admin
   /api/v1/admin/users:
     get:
       description: List all registered users (admin only)
@@ -511,58 +450,25 @@ paths:
       summary: Register a new user
       tags:
       - auth
-  /api/v1/notes:
-    get:
-      description: List notes for the authenticated user (or all notes for admin)
+  /api/v1/me:
+    put:
+      consumes:
+      - application/json
+      description: Update the authenticated user's profile
       parameters:
-      - default: 20
-        description: Number of items to return
-        in: query
-        name: limit
-        type: integer
-      - default: 0
-        description: Offset for pagination
-        in: query
-        name: offset
-        type: integer
+      - description: Profile updates
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateProfileRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.ListNotesResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: List notes
-      tags:
-      - notes
-    post:
-      consumes:
-      - application/json
-      description: Create a new note for the authenticated user
-      parameters:
-      - description: Note details
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CreateNoteRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/model.NoteResponse'
+            $ref: '#/definitions/model.UserResponse'
         "400":
           description: Bad Request
           schema:
@@ -577,14 +483,74 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Create a new note
+      summary: Update profile
       tags:
-      - notes
-  /api/v1/notes/{id}:
-    delete:
-      description: Soft-delete a note
+      - user
+  /api/v1/me/addresses:
+    get:
+      description: List all addresses for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.AddressResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List addresses
+      tags:
+      - user
+    post:
+      consumes:
+      - application/json
+      description: Add a new address for the authenticated user
       parameters:
-      - description: Note ID
+      - description: Address details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateAddressRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.AddressResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create address
+      tags:
+      - user
+  /api/v1/me/addresses/{id}:
+    delete:
+      description: Delete an address
+      parameters:
+      - description: Address ID
         in: path
         name: id
         required: true
@@ -608,64 +574,32 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Delete a note
+      summary: Delete address
       tags:
-      - notes
-    get:
-      description: Get a single note by ID
-      parameters:
-      - description: Note ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.NoteResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Get a note
-      tags:
-      - notes
+      - user
     put:
       consumes:
       - application/json
-      description: Update an existing note
+      description: Update an existing address
       parameters:
-      - description: Note ID
+      - description: Address ID
         in: path
         name: id
         required: true
         type: string
-      - description: Note updates
+      - description: Address updates
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.UpdateNoteRequest'
+          $ref: '#/definitions/model.UpdateAddressRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.NoteResponse'
+            $ref: '#/definitions/model.AddressResponse'
         "400":
           description: Bad Request
           schema:
@@ -684,9 +618,42 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update a note
+      summary: Update address
       tags:
-      - notes
+      - user
+  /api/v1/me/addresses/{id}/default:
+    put:
+      description: Set an address as the default
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AddressResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set default address
+      tags:
+      - user
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and the JWT token.

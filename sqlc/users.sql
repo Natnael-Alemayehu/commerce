@@ -24,6 +24,8 @@ SET
     password_hash = COALESCE(sqlc.narg('password_hash'), password_hash),
     name = COALESCE(sqlc.narg('name'), name),
     phone = COALESCE(sqlc.narg('phone'), phone),
+    avatar_url = COALESCE(sqlc.narg('avatar_url'), avatar_url),
+    bio = COALESCE(sqlc.narg('bio'), bio),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING *;

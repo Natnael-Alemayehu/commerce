@@ -61,62 +61,22 @@ func New(db *store.Store, passwordHasher *auth.PasswordHasher, jwtManager *auth.
 	// Services
 	authService := service.NewAuthService(db, passwordHasher, jwtManager)
 	enforcer := rbac.NewDBEnforcer(db)
-	noteService := service.NewNoteService(db, enforcer)
 
 	// Auth Routes (no auth middleware needed for some)
 	authHandler := handler.NewAuthHandler(authService)
 	authHandler.RegisterRoutes(r)
 
-	// Note Routes (require auth)
-	authMiddleware := middleware.Auth(jwtManager)
-	noteHandler := handler.NewNoteHandler(noteService)
-	r.Group(func(r chi.Router) {
-		r.Use(authMiddleware)
-		r.Use(middleware.RequirePermission(enforcer, "notes", "create"))
-		r.Post("/api/v1/notes", noteHandler.Create)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(authMiddleware)
-		r.Use(middleware.RequirePermission(enforcer, "notes", "list"))
-		r.Get("/api/v1/notes", noteHandler.List)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(authMiddleware)
-		r.Use(middleware.RequirePermission(enforcer, "notes", "read"))
-		r.Get("/api/v1/notes/{id}", noteHandler.Get)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(authMiddleware)
-		r.Use(middleware.RequirePermission(enforcer, "notes", "update"))
-		r.Put("/api/v1/notes/{id}", noteHandler.Update)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(authMiddleware)
-		r.Use(middleware.RequirePermission(enforcer, "notes", "delete"))
-		r.Delete("/api/v1/notes/{id}", noteHandler.Delete)
-	})
+	// User Routes (profile, addresses)
+	userHandler := handler.NewUserHandler(authService, db)
+	userHandler.RegisterRoutes(r)
 
 	// Admin Routes (require auth + admin permission)
-	adminHandler := handler.NewAdminHandler(noteService)
+	authMiddleware := middleware.Auth(jwtManager)
+	adminHandler := handler.NewAdminHandler(db)
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware)
 		r.Use(middleware.RequirePermission(enforcer, "users", "list"))
 		r.Get("/api/v1/admin/users", adminHandler.ListUsers)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(authMiddleware)
-		r.Use(middleware.RequirePermission(enforcer, "notes", "list:all"))
-		r.Get("/api/v1/admin/notes", adminHandler.ListAllNotes)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(authMiddleware)
-		r.Use(middleware.RequirePermission(enforcer, "notes", "list:deleted"))
-		r.Get("/api/v1/admin/notes/deleted", adminHandler.ListDeletedNotes)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(authMiddleware)
-		r.Use(middleware.RequirePermission(enforcer, "notes", "restore"))
-		r.Post("/api/v1/admin/notes/{id}/restore", adminHandler.RestoreNote)
 	})
 
 	return r

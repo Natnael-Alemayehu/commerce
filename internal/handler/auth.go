@@ -13,6 +13,7 @@ import (
 	"starterkit/internal/store"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -274,11 +275,23 @@ func toUserResponse(user store.User) model.UserResponse {
 		phone = user.Phone.String
 	}
 
+	avatarUrl := ""
+	if user.AvatarUrl.Valid {
+		avatarUrl = user.AvatarUrl.String
+	}
+
+	bio := ""
+	if user.Bio.Valid {
+		bio = user.Bio.String
+	}
+
 	return model.UserResponse{
 		ID:        user.ID.String(),
 		Email:     user.Email,
 		Name:      user.Name,
 		Phone:     phone,
+		AvatarUrl: avatarUrl,
+		Bio:       bio,
 		CreatedAt: user.CreatedAt.Time,
 		UpdatedAt: user.UpdatedAt.Time,
 	}
@@ -289,4 +302,12 @@ func isDuplicateKeyError(err error) bool {
 		return false
 	}
 	return strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint")
+}
+
+func mustParseUUID(s string) uuid.UUID {
+	id, err := uuid.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return id
 }

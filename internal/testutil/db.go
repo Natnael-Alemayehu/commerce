@@ -64,7 +64,7 @@ func (td *TestDB) Cleanup(t *testing.T) {
 	ctx := context.Background()
 
 	_, err := td.Pool.Exec(ctx, `
-		TRUNCATE TABLE notes, refresh_tokens, user_roles, role_permissions, permissions, roles, users RESTART IDENTITY CASCADE;
+		TRUNCATE TABLE addresses, refresh_tokens, user_roles, role_permissions, permissions, roles, users RESTART IDENTITY CASCADE;
 	`)
 	if err != nil {
 		t.Fatalf("Failed to cleanup test database: %v", err)
@@ -81,17 +81,16 @@ func (td *TestDB) Cleanup(t *testing.T) {
 			('users:read', 'users', 'read'),
 			('users:update', 'users', 'update'),
 			('users:delete', 'users', 'delete'),
-			('notes:create', 'notes', 'create'),
-			('notes:list', 'notes', 'list'),
-			('notes:list:all', 'notes', 'list:all'),
-			('notes:list:deleted', 'notes', 'list:deleted'),
-			('notes:read', 'notes', 'read'),
-			('notes:read:all', 'notes', 'read:all'),
-			('notes:update', 'notes', 'update'),
-			('notes:update:all', 'notes', 'update:all'),
-			('notes:delete', 'notes', 'delete'),
-			('notes:delete:all', 'notes', 'delete:all'),
-			('notes:restore', 'notes', 'restore');
+			('products:create', 'products', 'create'),
+			('products:update', 'products', 'update'),
+			('products:delete', 'products', 'delete'),
+			('inventory:update', 'inventory', 'update'),
+			('inventory:read', 'inventory', 'read'),
+			('orders:list', 'orders', 'list'),
+			('orders:read', 'orders', 'read'),
+			('orders:update', 'orders', 'update'),
+			('reviews:moderate', 'reviews', 'moderate'),
+			('upload:create', 'upload', 'create');
 
 		INSERT INTO role_permissions (role_id, permission_id)
 		SELECT r.id, p.id FROM roles r CROSS JOIN permissions p WHERE r.name = 'admin';
@@ -99,8 +98,7 @@ func (td *TestDB) Cleanup(t *testing.T) {
 		INSERT INTO role_permissions (role_id, permission_id)
 		SELECT r.id, p.id FROM roles r CROSS JOIN permissions p
 		WHERE r.name = 'user' AND p.name IN (
-			'users:read', 'users:update', 'users:delete',
-			'notes:create', 'notes:list', 'notes:read', 'notes:update', 'notes:delete'
+			'users:read', 'users:update', 'users:delete'
 		);
 	`)
 	if err != nil {
