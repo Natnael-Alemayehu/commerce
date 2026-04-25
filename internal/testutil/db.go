@@ -64,7 +64,7 @@ func (td *TestDB) Cleanup(t *testing.T) {
 	ctx := context.Background()
 
 	_, err := td.Pool.Exec(ctx, `
-		TRUNCATE TABLE product_images, product_variants, products, categories, addresses, refresh_tokens, user_roles, role_permissions, permissions, roles, users RESTART IDENTITY CASCADE;
+		TRUNCATE TABLE stock_movements, inventory, product_images, product_variants, products, categories, addresses, refresh_tokens, user_roles, role_permissions, permissions, roles, users RESTART IDENTITY CASCADE;
 	`)
 	if err != nil {
 		t.Fatalf("Failed to cleanup test database: %v", err)

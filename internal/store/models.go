@@ -37,6 +37,15 @@ type Category struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Inventory struct {
+	ID                uuid.UUID          `json:"id"`
+	VariantID         uuid.UUID          `json:"variant_id"`
+	Quantity          int32              `json:"quantity"`
+	ReservedQuantity  int32              `json:"reserved_quantity"`
+	LowStockThreshold pgtype.Int4        `json:"low_stock_threshold"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Permission struct {
 	ID        uuid.UUID          `json:"id"`
 	Name      string             `json:"name"`
@@ -115,6 +124,16 @@ type Role struct {
 type RolePermission struct {
 	RoleID       uuid.UUID `json:"role_id"`
 	PermissionID uuid.UUID `json:"permission_id"`
+}
+
+type StockMovement struct {
+	ID           uuid.UUID          `json:"id"`
+	VariantID    uuid.UUID          `json:"variant_id"`
+	MovementType string             `json:"movement_type"`
+	Quantity     int32              `json:"quantity"`
+	Reason       pgtype.Text        `json:"reason"`
+	ReferenceID  pgtype.UUID        `json:"reference_id"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
 type User struct {

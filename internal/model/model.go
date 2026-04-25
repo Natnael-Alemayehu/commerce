@@ -277,3 +277,40 @@ type ProductListFilter struct {
 	Limit      int64
 	Offset     int64
 }
+
+// InventoryResponse represents an inventory item in API responses.
+type InventoryResponse struct {
+	ID                string `json:"id"`
+	VariantID         string `json:"variant_id"`
+	SKU               string `json:"sku"`
+	VariantName       string `json:"variant_name,omitempty"`
+	ProductName       string `json:"product_name,omitempty"`
+	Quantity          int32  `json:"quantity"`
+	ReservedQuantity  int32  `json:"reserved_quantity"`
+	AvailableQuantity int32  `json:"available_quantity"`
+	LowStockThreshold int32  `json:"low_stock_threshold"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}
+
+// StockMovementResponse represents a stock movement in API responses.
+type StockMovementResponse struct {
+	ID           string    `json:"id"`
+	VariantID    string    `json:"variant_id"`
+	MovementType string    `json:"movement_type"`
+	Quantity     int32     `json:"quantity"`
+	Reason       string    `json:"reason,omitempty"`
+	ReferenceID  *string   `json:"reference_id,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+// AdjustStockRequest represents a stock adjustment request (admin).
+type AdjustStockRequest struct {
+	Quantity int32  `json:"quantity" validate:"required,gte=0"`
+	Reason   string `json:"reason,omitempty" validate:"omitempty,max=500"`
+}
+
+// InventoryListResponse represents a paginated inventory list response.
+type InventoryListResponse struct {
+	Data       []InventoryResponse `json:"data"`
+	Pagination PaginationMeta      `json:"pagination"`
+}

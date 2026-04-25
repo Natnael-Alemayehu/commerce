@@ -90,6 +90,8 @@ func New(db *store.Store, passwordHasher *auth.PasswordHasher, jwtManager *auth.
 	authMiddleware := middleware.Auth(jwtManager)
 	adminHandler := handler.NewAdminHandler(db)
 	adminProductHandler := handler.NewAdminProductHandler(productService, minioClient)
+	inventoryService := service.NewInventoryService(db)
+	adminInventoryHandler := handler.NewAdminInventoryHandler(inventoryService, productService)
 
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware)
@@ -123,6 +125,22 @@ func New(db *store.Store, passwordHasher *auth.PasswordHasher, jwtManager *auth.
 		r.Use(authMiddleware)
 		r.Use(middleware.RequirePermission(enforcer, "upload", "create"))
 		r.Post("/api/v1/admin/upload", adminProductHandler.PresignedUploadURL)
+	})
+
+	// Admin Inventory Routes
+	r.Group(func(r chi.Router) {
+		r.Use(authMiddleware)
+		r.Use(middleware.RequirePermission(enforcer, "inventory", "read"))
+		r.Get("/api/v1/admin/inventory", adminInventoryHandler.ListInventory)
+		r.Get("/api/v1/admin/inventory/low-stock", adminInventoryHandler.ListLowStock)
+		r.Get("/api/v1/admin/inventory/{variant_id}", adminInventoryHandler.GetInventoryByVariant)
+		r.Get("/api/v1/admin/inventory/{variant_id}/movements", adminInventoryHandler.ListStockMovements)
+	})
+
+	r.Group(func(r chi.Router) {
+		r.Use(authMiddleware)
+		r.Use(middleware.RequirePermission(enforcer, "inventory", "update"))
+		r.Put("/api/v1/admin/inventory/{variant_id}", adminInventoryHandler.AdjustStock)
 	})
 
 	return r
