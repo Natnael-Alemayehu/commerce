@@ -468,16 +468,21 @@ API Server ──► MinIO (self-hosted S3-compatible)
 
 ## 10. Implementation Chunks
 
-### Chunk 1: Foundation Reset
-- **Migration:** Drop `notes` table
-- **Migration:** Extend `users` with `avatar_url`, `bio`
-- **Migration:** Create `addresses` table
-- **Update:** RBAC seed data — replace note permissions with commerce permissions
-- **Update:** `users.sql` queries for new fields
-- **Update:** Auth service — profile update support
-- **Update:** Auth handlers — new user endpoints (profile CRUD, addresses CRUD)
-- **Update:** Remove note handler, service, and related code
-- **Update:** Integration test cleanup (remove note tests)
+### Chunk 1: Foundation Reset ✅ COMPLETE
+- **Migration:** Drop `notes` table (`006_drop_notes.sql`)
+- **Migration:** Extend `users` with `avatar_url`, `bio` (`007_user_profiles_and_addresses.sql`)
+- **Migration:** Create `addresses` table (`007_user_profiles_and_addresses.sql`)
+- **Migration:** Update RBAC seed data — replace note permissions with commerce permissions (`008_update_rbac_for_commerce.sql`)
+- **Update:** `users.sql` queries for new fields (avatar_url, bio)
+- **New:** `addresses.sql` — full address CRUD queries
+- **New:** `internal/handler/user.go` — profile update + address management endpoints
+- **Update:** `internal/handler/auth.go` — `toUserResponse` includes AvatarUrl, Bio
+- **Update:** `internal/handler/admin.go` — removed note admin, kept user list
+- **Update:** `internal/model/model.go` — added AddressResponse, CreateAddressRequest, UpdateAddressRequest, UpdateProfileRequest
+- **Update:** `internal/server/server.go` — removed note routes, wired user handler
+- **Update:** `internal/testutil/db.go` — cleanup excludes notes, re-seeds commerce RBAC
+- **Removed:** `internal/handler/note.go`, `internal/service/note.go`, `internal/store/notes.sql.go`, `sqlc/notes.sql`, `internal/integration/note_test.go`
+- **Commit:** `4736970`
 
 ### Chunk 2: Product Catalog + MinIO
 - **Migrations:** `categories`, `products`, `product_variants`, `product_images`

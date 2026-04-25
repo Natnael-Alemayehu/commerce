@@ -1,4 +1,4 @@
-package handler
+package httputil
 
 import (
 	"encoding/json"
@@ -17,8 +17,8 @@ import (
 
 var validate = validator.New()
 
-// respondJSON writes a JSON response with the given status code.
-func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
+// RespondJSON writes a JSON response with the given status code.
+func RespondJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(payload); err != nil {
@@ -26,8 +26,8 @@ func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
 	}
 }
 
-// respondError writes a standardized error response with request ID.
-func respondError(w http.ResponseWriter, r *http.Request, status int, code, message string, details ...string) {
+// RespondError writes a standardized error response with request ID.
+func RespondError(w http.ResponseWriter, r *http.Request, status int, code, message string, details ...string) {
 	requestID := middleware.GetReqID(r.Context())
 	resp := model.ErrorResponse{
 		Error: model.ErrorDetail{
@@ -45,8 +45,8 @@ func respondError(w http.ResponseWriter, r *http.Request, status int, code, mess
 	}
 }
 
-// decodeAndValidate decodes the request body and validates it.
-func decodeAndValidate(r *http.Request, dst interface{}) error {
+// DecodeAndValidate decodes the request body and validates it.
+func DecodeAndValidate(r *http.Request, dst interface{}) error {
 	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
 		return fmt.Errorf("decode request: %w", err)
 	}
@@ -56,8 +56,8 @@ func decodeAndValidate(r *http.Request, dst interface{}) error {
 	return nil
 }
 
-// validationErrorResponse converts validator errors to a user-friendly response.
-func validationErrorResponse(err error) (code, message string, details []string) {
+// ValidationErrorResponse converts validator errors to a user-friendly response.
+func ValidationErrorResponse(err error) (code, message string, details []string) {
 	var validationErrors validator.ValidationErrors
 	if errors.As(err, &validationErrors) {
 		code = "VALIDATION_ERROR"
@@ -79,15 +79,15 @@ func LogAndRespondError(w http.ResponseWriter, r *http.Request, status int, code
 		slog.Int("status", status),
 		slog.String("code", code),
 	)
-	respondError(w, r, status, code, message)
+	RespondError(w, r, status, code, message)
 }
 
 // LogAndRespondValidationError logs validation errors and sends a response.
 func LogAndRespondValidationError(w http.ResponseWriter, r *http.Request, err error) {
-	code, message, details := validationErrorResponse(err)
+	code, message, details := ValidationErrorResponse(err)
 	logger.FromContext(r.Context()).Warn("validation failed",
 		slog.String("code", code),
 		slog.String("error", err.Error()),
 	)
-	respondError(w, r, http.StatusBadRequest, code, message, details...)
+	RespondError(w, r, http.StatusBadRequest, code, message, details...)
 }

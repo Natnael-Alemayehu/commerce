@@ -87,14 +87,14 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*auth.
 	user, err := s.store.GetUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, store.User{}, errors.New("invalid credentials")
+			return nil, store.User{}, ErrInvalidCredentials
 		}
 		return nil, store.User{}, fmt.Errorf("get user: %w", err)
 	}
 
 	valid, err := s.passwordHasher.Verify(password, user.PasswordHash)
 	if err != nil || !valid {
-		return nil, store.User{}, errors.New("invalid credentials")
+		return nil, store.User{}, ErrInvalidCredentials
 	}
 
 	tokens, err := s.generateAndStoreTokenPair(ctx, user.ID)
@@ -109,7 +109,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*auth.
 func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*auth.TokenPair, store.User, error) {
 	claims, err := s.jwtManager.ValidateRefreshToken(refreshToken)
 	if err != nil {
-		return nil, store.User{}, errors.New("invalid refresh token")
+		return nil, store.User{}, ErrInvalidToken
 	}
 
 	// Check if token hash exists and is not revoked
@@ -117,7 +117,7 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*auth.T
 	_, err = s.store.GetRefreshTokenByHash(ctx, tokenHash)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, store.User{}, errors.New("refresh token not found")
+			return nil, store.User{}, ErrTokenNotFound
 		}
 		return nil, store.User{}, fmt.Errorf("get refresh token: %w", err)
 	}
@@ -127,13 +127,16 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*auth.T
 		return nil, store.User{}, fmt.Errorf("revoke old token: %w", err)
 	}
 
-	userID := mustParseUUID(claims.UserID)
+	userID, err := parseUUID(claims.UserID)
+	if err != nil {
+		return nil, store.User{}, fmt.Errorf("invalid user id in token: %w", err)
+	}
 
 	// Verify user exists
 	user, err := s.store.GetUserByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, store.User{}, errors.New("user not found")
+			return nil, store.User{}, ErrUserNotFound
 		}
 		return nil, store.User{}, fmt.Errorf("get user: %w", err)
 	}
@@ -148,7 +151,10 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*auth.T
 
 // GetUserByID retrieves a user by their ID.
 func (s *AuthService) GetUserByID(ctx context.Context, userID string) (store.User, error) {
-	id := mustParseUUID(userID)
+	id, err := parseUUID(userID)
+	if err != nil {
+		return store.User{}, err
+	}
 	return s.store.GetUserByID(ctx, id)
 }
 
@@ -157,7 +163,7 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	// Validate the token first to ensure it's legitimate
 	_, err := s.jwtManager.ValidateRefreshToken(refreshToken)
 	if err != nil {
-		return errors.New("invalid refresh token")
+		return ErrInvalidToken
 	}
 
 	tokenHash := hashToken(refreshToken)
@@ -170,7 +176,10 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 
 // LogoutAll revokes all refresh tokens for a user.
 func (s *AuthService) LogoutAll(ctx context.Context, userID string) error {
-	id := mustParseUUID(userID)
+	id, err := parseUUID(userID)
+	if err != nil {
+		return err
+	}
 	if err := s.store.RevokeAllUserRefreshTokens(ctx, id); err != nil {
 		return fmt.Errorf("revoke all user tokens: %w", err)
 	}
@@ -179,19 +188,22 @@ func (s *AuthService) LogoutAll(ctx context.Context, userID string) error {
 
 // DeleteAccount deletes a user account after password verification.
 func (s *AuthService) DeleteAccount(ctx context.Context, userID, password string) error {
-	id := mustParseUUID(userID)
+	id, err := parseUUID(userID)
+	if err != nil {
+		return err
+	}
 
 	user, err := s.store.GetUserByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return errors.New("user not found")
+			return ErrUserNotFound
 		}
 		return fmt.Errorf("get user: %w", err)
 	}
 
 	valid, err := s.passwordHasher.Verify(password, user.PasswordHash)
 	if err != nil || !valid {
-		return errors.New("invalid password")
+		return ErrInvalidPassword
 	}
 
 	if err := s.store.DeleteUser(ctx, id); err != nil {
@@ -233,10 +245,4 @@ func hashToken(token string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func mustParseUUID(s string) uuid.UUID {
-	id, err := uuid.Parse(s)
-	if err != nil {
-		panic(err)
-	}
-	return id
-}
+

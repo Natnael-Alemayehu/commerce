@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"starterkit/internal/httputil"
 	"starterkit/internal/logger"
 	"starterkit/internal/middleware"
 	"starterkit/internal/model"
@@ -12,6 +13,7 @@ import (
 	"starterkit/internal/store"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -58,13 +60,13 @@ func (h *UserHandler) RegisterRoutes(r chi.Router) {
 func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	var req model.UpdateProfileRequest
-	if err := decodeAndValidate(r, &req); err != nil {
-		LogAndRespondValidationError(w, r, err)
+	if err := httputil.DecodeAndValidate(r, &req); err != nil {
+		httputil.LogAndRespondValidationError(w, r, err)
 		return
 	}
 
@@ -88,7 +90,11 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		bio = pgtype.Text{String: req.Bio, Valid: true}
 	}
 
-	id := mustParseUUID(userID)
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		httputil.RespondError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid user id")
+		return
+	}
 	user, err := h.store.UpdateUser(r.Context(), store.UpdateUserParams{
 		ID:        id,
 		Name:      name,
@@ -97,11 +103,11 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		Bio:       bio,
 	})
 	if err != nil {
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to update profile", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to update profile", err)
 		return
 	}
 
-	respondJSON(w, http.StatusOK, toUserResponse(user))
+	httputil.RespondJSON(w, http.StatusOK, toUserResponse(user))
 }
 
 // ListAddresses godoc
@@ -117,16 +123,20 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) ListAddresses(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	logger.FromContext(r.Context()).Info("listing addresses", slog.String("user_id", userID))
 
-	id := mustParseUUID(userID)
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		httputil.RespondError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid user id")
+		return
+	}
 	addresses, err := h.store.ListAddressesByUser(r.Context(), id)
 	if err != nil {
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to list addresses", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to list addresses", err)
 		return
 	}
 
@@ -135,7 +145,7 @@ func (h *UserHandler) ListAddresses(w http.ResponseWriter, r *http.Request) {
 		resp[i] = toAddressResponse(addr)
 	}
 
-	respondJSON(w, http.StatusOK, resp)
+	httputil.RespondJSON(w, http.StatusOK, resp)
 }
 
 // CreateAddress godoc
@@ -154,22 +164,26 @@ func (h *UserHandler) ListAddresses(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) CreateAddress(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	var req model.CreateAddressRequest
-	if err := decodeAndValidate(r, &req); err != nil {
-		LogAndRespondValidationError(w, r, err)
+	if err := httputil.DecodeAndValidate(r, &req); err != nil {
+		httputil.LogAndRespondValidationError(w, r, err)
 		return
 	}
 
-	id := mustParseUUID(userID)
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		httputil.RespondError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid user id")
+		return
+	}
 
 	// If setting as default, clear other defaults first
 	if req.IsDefault {
 		if err := h.store.ClearUserDefaultAddresses(r.Context(), id); err != nil {
-			LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to clear default addresses", err)
+			httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to clear default addresses", err)
 			return
 		}
 	}
@@ -207,11 +221,11 @@ func (h *UserHandler) CreateAddress(w http.ResponseWriter, r *http.Request) {
 		IsDefault:     pgtype.Bool{Bool: req.IsDefault, Valid: true},
 	})
 	if err != nil {
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create address", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create address", err)
 		return
 	}
 
-	respondJSON(w, http.StatusCreated, toAddressResponse(addr))
+	httputil.RespondJSON(w, http.StatusCreated, toAddressResponse(addr))
 }
 
 // UpdateAddress godoc
@@ -232,40 +246,48 @@ func (h *UserHandler) CreateAddress(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) UpdateAddress(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	addressID := chi.URLParam(r, "id")
 
 	var req model.UpdateAddressRequest
-	if err := decodeAndValidate(r, &req); err != nil {
-		LogAndRespondValidationError(w, r, err)
+	if err := httputil.DecodeAndValidate(r, &req); err != nil {
+		httputil.LogAndRespondValidationError(w, r, err)
 		return
 	}
 
 	// Verify ownership
-	uid := mustParseUUID(userID)
-	aid := mustParseUUID(addressID)
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		httputil.RespondError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid user id")
+		return
+	}
+	aid, err := uuid.Parse(addressID)
+	if err != nil {
+		httputil.RespondError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid address id")
+		return
+	}
 	addr, err := h.store.GetAddressByID(r.Context(), aid)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			respondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
+			httputil.RespondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
 			return
 		}
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to get address", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to get address", err)
 		return
 	}
 
 	if addr.UserID != uid {
-		respondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
+		httputil.RespondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
 		return
 	}
 
 	// If setting as default, clear other defaults first
 	if req.IsDefault != nil && *req.IsDefault {
 		if err := h.store.ClearUserDefaultAddresses(r.Context(), uid); err != nil {
-			LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to clear default addresses", err)
+			httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to clear default addresses", err)
 			return
 		}
 	}
@@ -329,14 +351,14 @@ func (h *UserHandler) UpdateAddress(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			respondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
+			httputil.RespondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
 			return
 		}
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to update address", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to update address", err)
 		return
 	}
 
-	respondJSON(w, http.StatusOK, toAddressResponse(updated))
+	httputil.RespondJSON(w, http.StatusOK, toAddressResponse(updated))
 }
 
 // DeleteAddress godoc
@@ -354,32 +376,40 @@ func (h *UserHandler) UpdateAddress(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) DeleteAddress(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	addressID := chi.URLParam(r, "id")
 
 	// Verify ownership
-	uid := mustParseUUID(userID)
-	aid := mustParseUUID(addressID)
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		httputil.RespondError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid user id")
+		return
+	}
+	aid, err := uuid.Parse(addressID)
+	if err != nil {
+		httputil.RespondError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid address id")
+		return
+	}
 	addr, err := h.store.GetAddressByID(r.Context(), aid)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			respondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
+			httputil.RespondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
 			return
 		}
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to get address", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to get address", err)
 		return
 	}
 
 	if addr.UserID != uid {
-		respondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
+		httputil.RespondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
 		return
 	}
 
 	if err := h.store.DeleteAddress(r.Context(), aid); err != nil {
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to delete address", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to delete address", err)
 		return
 	}
 
@@ -401,32 +431,40 @@ func (h *UserHandler) DeleteAddress(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) SetDefaultAddress(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	addressID := chi.URLParam(r, "id")
 
 	// Verify ownership
-	uid := mustParseUUID(userID)
-	aid := mustParseUUID(addressID)
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		httputil.RespondError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid user id")
+		return
+	}
+	aid, err := uuid.Parse(addressID)
+	if err != nil {
+		httputil.RespondError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid address id")
+		return
+	}
 	addr, err := h.store.GetAddressByID(r.Context(), aid)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			respondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
+			httputil.RespondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
 			return
 		}
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to get address", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to get address", err)
 		return
 	}
 
 	if addr.UserID != uid {
-		respondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
+		httputil.RespondError(w, r, http.StatusNotFound, "NOT_FOUND", "address not found")
 		return
 	}
 
 	if err := h.store.ClearUserDefaultAddresses(r.Context(), uid); err != nil {
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to clear defaults", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to clear defaults", err)
 		return
 	}
 
@@ -435,11 +473,11 @@ func (h *UserHandler) SetDefaultAddress(w http.ResponseWriter, r *http.Request) 
 		IsDefault: pgtype.Bool{Bool: true, Valid: true},
 	})
 	if err != nil {
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to set default", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to set default", err)
 		return
 	}
 
-	respondJSON(w, http.StatusOK, toAddressResponse(updated))
+	httputil.RespondJSON(w, http.StatusOK, toAddressResponse(updated))
 }
 
 func toAddressResponse(addr store.Address) model.AddressResponse {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"starterkit/internal/httputil"
 	"starterkit/internal/logger"
 	"starterkit/internal/middleware"
 	"starterkit/internal/model"
@@ -13,7 +14,6 @@ import (
 	"starterkit/internal/store"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -54,22 +54,22 @@ func (h *AuthHandler) RegisterRoutes(r chi.Router) {
 // @Router      /api/v1/auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req model.RegisterRequest
-	if err := decodeAndValidate(r, &req); err != nil {
-		LogAndRespondValidationError(w, r, err)
+	if err := httputil.DecodeAndValidate(r, &req); err != nil {
+		httputil.LogAndRespondValidationError(w, r, err)
 		return
 	}
 
 	tokens, user, err := h.service.Register(r.Context(), req.Email, req.Password, req.Name, req.Phone)
 	if err != nil {
 		if isDuplicateKeyError(err) {
-			respondError(w, r, http.StatusConflict, "CONFLICT", "user with this email already exists")
+			httputil.RespondError(w, r, http.StatusConflict, "CONFLICT", "user with this email already exists")
 			return
 		}
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to register user", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to register user", err)
 		return
 	}
 
-	respondJSON(w, http.StatusCreated, model.AuthResponse{
+	httputil.RespondJSON(w, http.StatusCreated, model.AuthResponse{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
 		ExpiresIn:    tokens.ExpiresIn,
@@ -91,22 +91,22 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Router      /api/v1/auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req model.LoginRequest
-	if err := decodeAndValidate(r, &req); err != nil {
-		LogAndRespondValidationError(w, r, err)
+	if err := httputil.DecodeAndValidate(r, &req); err != nil {
+		httputil.LogAndRespondValidationError(w, r, err)
 		return
 	}
 
 	tokens, user, err := h.service.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) || err.Error() == "invalid credentials" {
-			respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "invalid email or password")
+		if errors.Is(err, pgx.ErrNoRows) || errors.Is(err, service.ErrInvalidCredentials) {
+			httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "invalid email or password")
 			return
 		}
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to login", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to login", err)
 		return
 	}
 
-	respondJSON(w, http.StatusOK, model.AuthResponse{
+	httputil.RespondJSON(w, http.StatusOK, model.AuthResponse{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
 		ExpiresIn:    tokens.ExpiresIn,
@@ -128,18 +128,18 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Router      /api/v1/auth/refresh [post]
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req model.RefreshRequest
-	if err := decodeAndValidate(r, &req); err != nil {
-		LogAndRespondValidationError(w, r, err)
+	if err := httputil.DecodeAndValidate(r, &req); err != nil {
+		httputil.LogAndRespondValidationError(w, r, err)
 		return
 	}
 
 	tokens, user, err := h.service.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
-		respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "invalid or expired refresh token")
+		httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "invalid or expired refresh token")
 		return
 	}
 
-	respondJSON(w, http.StatusOK, model.AuthResponse{
+	httputil.RespondJSON(w, http.StatusOK, model.AuthResponse{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
 		ExpiresIn:    tokens.ExpiresIn,
@@ -161,13 +161,13 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 // @Router      /api/v1/auth/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	var req model.LogoutRequest
-	if err := decodeAndValidate(r, &req); err != nil {
-		LogAndRespondValidationError(w, r, err)
+	if err := httputil.DecodeAndValidate(r, &req); err != nil {
+		httputil.LogAndRespondValidationError(w, r, err)
 		return
 	}
 
 	if err := h.service.Logout(r.Context(), req.RefreshToken); err != nil {
-		respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "invalid or expired refresh token")
+		httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "invalid or expired refresh token")
 		return
 	}
 
@@ -187,12 +187,12 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	if err := h.service.LogoutAll(r.Context(), userID); err != nil {
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to logout all sessions", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to logout all sessions", err)
 		return
 	}
 
@@ -212,7 +212,7 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
@@ -221,14 +221,14 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	user, err := h.service.GetUserByID(r.Context(), userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			respondError(w, r, http.StatusNotFound, "NOT_FOUND", "user not found")
+			httputil.RespondError(w, r, http.StatusNotFound, "NOT_FOUND", "user not found")
 			return
 		}
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to get user", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to get user", err)
 		return
 	}
 
-	respondJSON(w, http.StatusOK, toUserResponse(user))
+	httputil.RespondJSON(w, http.StatusOK, toUserResponse(user))
 }
 
 // DeleteMe godoc
@@ -247,22 +247,22 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) DeleteMe(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	var req model.DeleteAccountRequest
-	if err := decodeAndValidate(r, &req); err != nil {
-		LogAndRespondValidationError(w, r, err)
+	if err := httputil.DecodeAndValidate(r, &req); err != nil {
+		httputil.LogAndRespondValidationError(w, r, err)
 		return
 	}
 
 	if err := h.service.DeleteAccount(r.Context(), userID, req.Password); err != nil {
-		if err.Error() == "invalid password" || err.Error() == "user not found" {
-			respondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "invalid credentials")
+		if errors.Is(err, service.ErrInvalidPassword) || errors.Is(err, service.ErrUserNotFound) {
+			httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "invalid credentials")
 			return
 		}
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to delete account", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to delete account", err)
 		return
 	}
 
@@ -304,10 +304,4 @@ func isDuplicateKeyError(err error) bool {
 	return strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint")
 }
 
-func mustParseUUID(s string) uuid.UUID {
-	id, err := uuid.Parse(s)
-	if err != nil {
-		panic(err)
-	}
-	return id
-}
+

@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"starterkit/internal/httputil"
 	"starterkit/internal/model"
 	"starterkit/internal/store"
 
@@ -38,7 +39,7 @@ func (h *AdminHandler) RegisterRoutes(r chi.Router) {
 func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := h.store.GetAllUsers(r.Context())
 	if err != nil {
-		LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to list users", err)
+		httputil.LogAndRespondError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to list users", err)
 		return
 	}
 
@@ -47,5 +48,5 @@ func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		resp[i] = toUserResponse(user)
 	}
 
-	respondJSON(w, http.StatusOK, resp)
+	httputil.RespondJSON(w, http.StatusOK, resp)
 }

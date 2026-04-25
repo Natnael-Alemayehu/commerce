@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"starterkit/internal/auth"
+	"starterkit/internal/httputil"
 	"starterkit/internal/logger"
 )
 
@@ -18,29 +19,26 @@ func Auth(jwtManager *auth.JWTManager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" {
-				logger.FromContext(r.Context()).Warn("missing authorization header")
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error":{"code":"UNAUTHORIZED","message":"missing authorization header"}}`))
-				return
-			}
+		if authHeader == "" {
+			logger.FromContext(r.Context()).Warn("missing authorization header")
+			httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "missing authorization header")
+			return
+		}
 
-			parts := strings.SplitN(authHeader, " ", 2)
-			if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-				logger.FromContext(r.Context()).Warn("invalid authorization header format")
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error":{"code":"UNAUTHORIZED","message":"invalid authorization header format"}}`))
-				return
-			}
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+			logger.FromContext(r.Context()).Warn("invalid authorization header format")
+			httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "invalid authorization header format")
+			return
+		}
 
-			token := parts[1]
-			claims, err := jwtManager.ValidateAccessToken(token)
-			if err != nil {
-				logger.FromContext(r.Context()).Warn("invalid token", "error", err)
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error":{"code":"UNAUTHORIZED","message":"invalid or expired token"}}`))
-				return
-			}
+		token := parts[1]
+		claims, err := jwtManager.ValidateAccessToken(token)
+		if err != nil {
+			logger.FromContext(r.Context()).Warn("invalid token", "error", err)
+			httputil.RespondError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "invalid or expired token")
+			return
+		}
 
 			ctx := WithUserID(r.Context(), claims.UserID)
 			next.ServeHTTP(w, r.WithContext(ctx))
