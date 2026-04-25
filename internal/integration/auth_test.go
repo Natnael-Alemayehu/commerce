@@ -35,7 +35,8 @@ func setupTestServer(t *testing.T) (*httptest.Server, *testutil.TestDB, func()) 
 		168*time.Hour,
 	)
 
-	router := server.New(tdb.Store, passwordHasher, jwtManager)
+	cfg := testutil.TestConfig()
+	router := server.New(tdb.Store, passwordHasher, jwtManager, cfg)
 	srv := httptest.NewServer(router)
 
 	cleanup := func() {

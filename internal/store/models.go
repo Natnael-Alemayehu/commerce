@@ -24,12 +24,76 @@ type Address struct {
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 }
 
+type Category struct {
+	ID          uuid.UUID          `json:"id"`
+	Name        string             `json:"name"`
+	Slug        string             `json:"slug"`
+	Description pgtype.Text        `json:"description"`
+	ParentID    pgtype.UUID        `json:"parent_id"`
+	SortOrder   pgtype.Int4        `json:"sort_order"`
+	ImageUrl    pgtype.Text        `json:"image_url"`
+	IsActive    pgtype.Bool        `json:"is_active"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Permission struct {
 	ID        uuid.UUID          `json:"id"`
 	Name      string             `json:"name"`
 	Resource  string             `json:"resource"`
 	Action    string             `json:"action"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type Product struct {
+	ID               uuid.UUID          `json:"id"`
+	CategoryID       pgtype.UUID        `json:"category_id"`
+	Name             string             `json:"name"`
+	Slug             string             `json:"slug"`
+	Description      pgtype.Text        `json:"description"`
+	ShortDescription pgtype.Text        `json:"short_description"`
+	BasePrice        pgtype.Numeric     `json:"base_price"`
+	CompareAtPrice   pgtype.Numeric     `json:"compare_at_price"`
+	Status           pgtype.Text        `json:"status"`
+	Gender           pgtype.Text        `json:"gender"`
+	Sport            pgtype.Text        `json:"sport"`
+	Brand            pgtype.Text        `json:"brand"`
+	Tags             []string           `json:"tags"`
+	WeightG          pgtype.Int4        `json:"weight_g"`
+	MaterialInfo     pgtype.Text        `json:"material_info"`
+	CareInstructions pgtype.Text        `json:"care_instructions"`
+	AvgRating        pgtype.Numeric     `json:"avg_rating"`
+	ReviewCount      pgtype.Int4        `json:"review_count"`
+	SeoTitle         pgtype.Text        `json:"seo_title"`
+	SeoDescription   pgtype.Text        `json:"seo_description"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type ProductImage struct {
+	ID        uuid.UUID          `json:"id"`
+	ProductID uuid.UUID          `json:"product_id"`
+	VariantID pgtype.UUID        `json:"variant_id"`
+	ImageUrl  string             `json:"image_url"`
+	AltText   pgtype.Text        `json:"alt_text"`
+	SortOrder pgtype.Int4        `json:"sort_order"`
+	IsPrimary pgtype.Bool        `json:"is_primary"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type ProductVariant struct {
+	ID            uuid.UUID          `json:"id"`
+	ProductID     uuid.UUID          `json:"product_id"`
+	Sku           string             `json:"sku"`
+	VariantName   pgtype.Text        `json:"variant_name"`
+	ColorName     pgtype.Text        `json:"color_name"`
+	ColorHex      pgtype.Text        `json:"color_hex"`
+	SizeLabel     pgtype.Text        `json:"size_label"`
+	SizeSystem    pgtype.Text        `json:"size_system"`
+	PriceOverride pgtype.Numeric     `json:"price_override"`
+	IsActive      pgtype.Bool        `json:"is_active"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 }
 
 type RefreshToken struct {

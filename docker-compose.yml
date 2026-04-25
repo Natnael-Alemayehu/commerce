@@ -29,6 +29,11 @@ services:
       JWT_SECRET: local-dev-secret-change-me-in-production
       JWT_ACCESS_TTL: 15m
       JWT_REFRESH_TTL: 168h
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: commerce
+      MINIO_SECRET_KEY: commerce123
+      MINIO_BUCKET: product-images
+      MINIO_USE_SSL: "false"
     ports:
       - "8080:8080"
     volumes:
@@ -36,7 +41,28 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     command: ["go", "run", "./cmd/api"]
+
+  minio:
+    image: minio/minio:latest
+    container_name: commerce-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: commerce
+      MINIO_ROOT_PASSWORD: commerce123
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
+  minio_data:

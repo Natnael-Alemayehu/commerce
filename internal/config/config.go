@@ -23,6 +23,12 @@ type Config struct {
 	Argon2Threads uint8  `env:"ARGON2_THREADS" envDefault:"4"`
 	Argon2KeyLen  uint32 `env:"ARGON2_KEYLEN" envDefault:"32"`
 	Argon2SaltLen uint32 `env:"ARGON2_SALTLEN" envDefault:"16"`
+
+	MinioEndpoint  string `env:"MINIO_ENDPOINT,required"`
+	MinioAccessKey string `env:"MINIO_ACCESS_KEY,required"`
+	MinioSecretKey string `env:"MINIO_SECRET_KEY,required"`
+	MinioBucket    string `env:"MINIO_BUCKET" envDefault:"product-images"`
+	MinioUseSSL    bool   `env:"MINIO_USE_SSL" envDefault:"false"`
 }
 
 // Load parses environment variables into Config.

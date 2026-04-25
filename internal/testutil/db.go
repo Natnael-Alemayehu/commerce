@@ -64,7 +64,7 @@ func (td *TestDB) Cleanup(t *testing.T) {
 	ctx := context.Background()
 
 	_, err := td.Pool.Exec(ctx, `
-		TRUNCATE TABLE addresses, refresh_tokens, user_roles, role_permissions, permissions, roles, users RESTART IDENTITY CASCADE;
+		TRUNCATE TABLE product_images, product_variants, products, categories, addresses, refresh_tokens, user_roles, role_permissions, permissions, roles, users RESTART IDENTITY CASCADE;
 	`)
 	if err != nil {
 		t.Fatalf("Failed to cleanup test database: %v", err)
@@ -100,6 +100,18 @@ func (td *TestDB) Cleanup(t *testing.T) {
 		WHERE r.name = 'user' AND p.name IN (
 			'users:read', 'users:update', 'users:delete'
 		);
+
+		-- Re-seed categories
+		INSERT INTO categories (name, slug, description, sort_order) VALUES
+			('Men', 'men', 'Men collection', 1),
+			('Women', 'women', 'Women collection', 2),
+			('Kids', 'kids', 'Kids collection', 3),
+			('Originals', 'originals', 'adidas Originals', 4),
+			('Running', 'running', 'Running shoes and apparel', 5),
+			('Training', 'training', 'Training and gym', 6),
+			('Soccer', 'soccer', 'Soccer and football', 7),
+			('Basketball', 'basketball', 'Basketball gear', 8),
+			('Lifestyle', 'lifestyle', 'Lifestyle and casual', 9);
 	`)
 	if err != nil {
 		t.Fatalf("Failed to re-seed RBAC data: %v", err)
@@ -132,16 +144,21 @@ func runMigrations(databaseURL string) error {
 // TestConfig returns a test configuration.
 func TestConfig() *config.Config {
 	return &config.Config{
-		Environment:   "test",
-		Port:          "8080",
-		DatabaseURL:   os.Getenv("TEST_DATABASE_URL"),
-		JWTSecret:     "test-secret-key-that-is-32-bytes!",
-		JWTAccessTTL:  15 * time.Minute,
-		JWTRefreshTTL: 168 * time.Hour,
-		Argon2Time:    1,
-		Argon2Memory:  65536,
-		Argon2Threads: 4,
-		Argon2KeyLen:  32,
-		Argon2SaltLen: 16,
+		Environment:    "test",
+		Port:           "8080",
+		DatabaseURL:    os.Getenv("TEST_DATABASE_URL"),
+		JWTSecret:      "test-secret-key-that-is-32-bytes!",
+		JWTAccessTTL:   15 * time.Minute,
+		JWTRefreshTTL:  168 * time.Hour,
+		Argon2Time:     1,
+		Argon2Memory:   65536,
+		Argon2Threads:  4,
+		Argon2KeyLen:   32,
+		Argon2SaltLen:  16,
+		MinioEndpoint:  "localhost:9000",
+		MinioAccessKey: "test",
+		MinioSecretKey: "test",
+		MinioBucket:    "product-images",
+		MinioUseSSL:    false,
 	}
 }

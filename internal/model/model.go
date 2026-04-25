@@ -117,3 +117,163 @@ type PaginationMeta struct {
 	Limit  int64 `json:"limit"`
 	Offset int64 `json:"offset"`
 }
+
+// ProductResponse represents a product in API responses.
+type ProductResponse struct {
+	ID               string           `json:"id"`
+	CategoryID       *string          `json:"category_id,omitempty"`
+	Name             string           `json:"name"`
+	Slug             string           `json:"slug"`
+	Description      string           `json:"description,omitempty"`
+	ShortDescription string           `json:"short_description,omitempty"`
+	BasePrice        float64          `json:"base_price"`
+	CompareAtPrice   *float64         `json:"compare_at_price,omitempty"`
+	Status           string           `json:"status"`
+	Gender           string           `json:"gender,omitempty"`
+	Sport            string           `json:"sport,omitempty"`
+	Brand            string           `json:"brand"`
+	Tags             []string         `json:"tags,omitempty"`
+	WeightG          int32            `json:"weight_g,omitempty"`
+	MaterialInfo     string           `json:"material_info,omitempty"`
+	CareInstructions string           `json:"care_instructions,omitempty"`
+	AvgRating        float64          `json:"avg_rating"`
+	ReviewCount      int32            `json:"review_count"`
+	SeoTitle         string           `json:"seo_title,omitempty"`
+	SeoDescription   string           `json:"seo_description,omitempty"`
+	Images           []ProductImageResponse `json:"images,omitempty"`
+	Variants         []ProductVariantResponse `json:"variants,omitempty"`
+	CreatedAt        time.Time        `json:"created_at"`
+	UpdatedAt        time.Time        `json:"updated_at"`
+}
+
+// ProductVariantResponse represents a product variant in API responses.
+type ProductVariantResponse struct {
+	ID            string   `json:"id"`
+	ProductID     string   `json:"product_id"`
+	SKU           string   `json:"sku"`
+	VariantName   string   `json:"variant_name,omitempty"`
+	ColorName     string   `json:"color_name,omitempty"`
+	ColorHex      string   `json:"color_hex,omitempty"`
+	SizeLabel     string   `json:"size_label,omitempty"`
+	SizeSystem    string   `json:"size_system,omitempty"`
+	PriceOverride *float64 `json:"price_override,omitempty"`
+	IsActive      bool     `json:"is_active"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+// ProductImageResponse represents a product image in API responses.
+type ProductImageResponse struct {
+	ID        string  `json:"id"`
+	ProductID string  `json:"product_id"`
+	VariantID *string `json:"variant_id,omitempty"`
+	ImageURL  string  `json:"image_url"`
+	AltText   string  `json:"alt_text,omitempty"`
+	SortOrder int32   `json:"sort_order"`
+	IsPrimary bool    `json:"is_primary"`
+}
+
+// CategoryResponse represents a category in API responses.
+type CategoryResponse struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Slug        string    `json:"slug"`
+	Description string    `json:"description,omitempty"`
+	ParentID    *string   `json:"parent_id,omitempty"`
+	SortOrder   int32     `json:"sort_order"`
+	ImageURL    string    `json:"image_url,omitempty"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// CreateProductRequest represents a product creation request (admin).
+type CreateProductRequest struct {
+	CategoryID       *string  `json:"category_id,omitempty" validate:"omitempty,uuid"`
+	Name             string   `json:"name" validate:"required,max=255"`
+	Slug             string   `json:"slug" validate:"required,max=255"`
+	Description      string   `json:"description,omitempty"`
+	ShortDescription string   `json:"short_description,omitempty"`
+	BasePrice        float64  `json:"base_price" validate:"required,gt=0"`
+	CompareAtPrice   *float64 `json:"compare_at_price,omitempty"`
+	Status           string   `json:"status,omitempty" validate:"omitempty,oneof=active draft discontinued"`
+	Gender           string   `json:"gender,omitempty" validate:"omitempty,oneof=men women unisex kids"`
+	Sport            string   `json:"sport,omitempty" validate:"omitempty,max=50"`
+	Brand            string   `json:"brand,omitempty" validate:"omitempty,max=50"`
+	Tags             []string `json:"tags,omitempty"`
+	WeightG          int32    `json:"weight_g,omitempty"`
+	MaterialInfo     string   `json:"material_info,omitempty"`
+	CareInstructions string   `json:"care_instructions,omitempty"`
+	SeoTitle         string   `json:"seo_title,omitempty" validate:"omitempty,max=255"`
+	SeoDescription   string   `json:"seo_description,omitempty"`
+}
+
+// UpdateProductRequest represents a product update request (admin).
+type UpdateProductRequest struct {
+	CategoryID       *string  `json:"category_id,omitempty" validate:"omitempty,uuid"`
+	Name             string   `json:"name,omitempty" validate:"omitempty,max=255"`
+	Slug             string   `json:"slug,omitempty" validate:"omitempty,max=255"`
+	Description      string   `json:"description,omitempty"`
+	ShortDescription string   `json:"short_description,omitempty"`
+	BasePrice        *float64 `json:"base_price,omitempty" validate:"omitempty,gt=0"`
+	CompareAtPrice   *float64 `json:"compare_at_price,omitempty"`
+	Status           string   `json:"status,omitempty" validate:"omitempty,oneof=active draft discontinued"`
+	Gender           string   `json:"gender,omitempty" validate:"omitempty,oneof=men women unisex kids"`
+	Sport            string   `json:"sport,omitempty" validate:"omitempty,max=50"`
+	Brand            string   `json:"brand,omitempty" validate:"omitempty,max=50"`
+	Tags             []string `json:"tags,omitempty"`
+	WeightG          *int32   `json:"weight_g,omitempty"`
+	MaterialInfo     string   `json:"material_info,omitempty"`
+	CareInstructions string   `json:"care_instructions,omitempty"`
+	SeoTitle         string   `json:"seo_title,omitempty" validate:"omitempty,max=255"`
+	SeoDescription   string   `json:"seo_description,omitempty"`
+}
+
+// CreateVariantRequest represents a variant creation request (admin).
+type CreateVariantRequest struct {
+	SKU           string   `json:"sku" validate:"required,max=100"`
+	VariantName   string   `json:"variant_name,omitempty" validate:"omitempty,max=100"`
+	ColorName     string   `json:"color_name,omitempty" validate:"omitempty,max=50"`
+	ColorHex      string   `json:"color_hex,omitempty" validate:"omitempty,max=7"`
+	SizeLabel     string   `json:"size_label,omitempty" validate:"omitempty,max=20"`
+	SizeSystem    string   `json:"size_system,omitempty" validate:"omitempty,max=10"`
+	PriceOverride *float64 `json:"price_override,omitempty"`
+}
+
+// UpdateVariantRequest represents a variant update request (admin).
+type UpdateVariantRequest struct {
+	SKU           string   `json:"sku,omitempty" validate:"omitempty,max=100"`
+	VariantName   string   `json:"variant_name,omitempty" validate:"omitempty,max=100"`
+	ColorName     string   `json:"color_name,omitempty" validate:"omitempty,max=50"`
+	ColorHex      string   `json:"color_hex,omitempty" validate:"omitempty,max=7"`
+	SizeLabel     string   `json:"size_label,omitempty" validate:"omitempty,max=20"`
+	SizeSystem    string   `json:"size_system,omitempty" validate:"omitempty,max=10"`
+	PriceOverride *float64 `json:"price_override,omitempty"`
+	IsActive      *bool    `json:"is_active,omitempty"`
+}
+
+// ProductListResponse represents a paginated product list response.
+type ProductListResponse struct {
+	Data       []ProductResponse `json:"data"`
+	Pagination PaginationMeta    `json:"pagination"`
+}
+
+// PresignedUploadResponse represents a presigned URL for image upload.
+type PresignedUploadResponse struct {
+	UploadURL  string `json:"upload_url"`
+	PublicURL  string `json:"public_url"`
+	ObjectName string `json:"object_name"`
+}
+
+// ProductListFilter represents filtering parameters for product listing.
+type ProductListFilter struct {
+	CategoryID *string
+	Gender     string
+	Sport      string
+	Status     string
+	PriceMin   float64
+	PriceMax   float64
+	Tags       []string
+	SortBy     string
+	Limit      int64
+	Offset     int64
+}
